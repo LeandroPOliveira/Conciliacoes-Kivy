@@ -1,0 +1,120 @@
+<LoginWindow>:
+    name: "main"
+
+    FloatLayout:
+        size: root.width, root.height
+
+        Button:
+            size_hint: (.8, .8)
+            pos_hint: {'x':0.1, 'y':0.1}
+            background_normal: ''
+            background_color: (43/255, 197/255, 232/255, 1)
+
+
+        Label:
+            text: 'Login'
+            pos_hint: {'x':0.4, 'y':0.7}
+            color: (0,0,0,1)
+            size_hint: (.2, .1)
+            font_size: 30
+
+        Label:
+            id: user
+            text: 'Escolha o usuário:'
+            font_size: 32
+            pos_hint: {'x':0.4, 'y':0.6}
+            size_hint: (.2, .1)
+
+        Spinner:
+            id: spinner_id
+            text: 'Usuários'
+            values: ['Leandro Oliveira', 'Mariclea Martini', 'Michele Bernardino', 'Paulo França']
+            size_hint: (.2, .05)
+            pos_hint: {'x':0.4, 'y':0.5}
+            background_normal: ''
+            background_color: (1,1,1,1)
+            color: (0,0,0,1)
+
+        Button:
+            size_hint: (.2, .1)
+            text: 'Entrar'
+            font_size: 20
+            pos_hint: {'x':0.4, 'y':0.3}
+            background_normal: ''
+            background_color: (0,1,0,1)
+            on_release:
+                app.root.current = 'validar'
+                #app.entrar(spinner_id)
+
+
+
+
+<DataWindow>
+    name: 'validar'
+
+    FloatLayout:
+        size: root.width, root.height
+
+        Label:
+            text: 'Selecione a Competência:'
+            font_size: 24
+            pos_hint: {'x':0.4, 'y':0.7}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+
+        Spinner:
+            id: spinner_id2
+            text: root.lista[0]
+            values: root.lista
+            size_hint: (.2, .05)
+            pos_hint: {'x':0.4, 'y':0.6}
+            background_normal: ''
+            background_color: (1,1,1,1)
+            color: (0,0,0,1)
+            on_text: root.on_spinner_select(self.text)
+
+        Button:
+            size_hint: (.2, .1)
+            text: 'Gerar Relatório'
+            font_size: 20
+            pos_hint: {'x':0.4, 'y':0.4}
+            background_normal: ''
+            background_color: (0,1,1,1)
+            color: (0,0,0,1)
+            on_press:
+                root.validacao()
+                app.root.current = 'teste1'
+
+
+
+<BoxTeste>:
+
+    on_enter: root.add_datatable()
+    name: 'teste1'
+
+    FloatLayout:
+        size: root.width, root.height
+        id: data_layout
+
+        Button:
+            size_hint: (.15, .1)
+            text: 'Gerar Relatório'
+            font_size: 20
+            pos_hint: {'x':0.3, 'y':0.05}
+            background_normal: ''
+            background_color: (0.2,0,1,1)
+            color: (0,0,0,1)
+            on_press:
+                app.root.current = 'validar'
+
+
+
+WindowManager:
+    LoginWindow:
+
+    DataWindow:
+        id: data_scr
+
+    BoxTeste:
+        id: data2
