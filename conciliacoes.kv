@@ -4,44 +4,68 @@
     FloatLayout:
         size: root.width, root.height
 
+        Image:
+            source: 'drew.jpg'
+            allow_stretch: True
+            keep_ratio: False
+
         Button:
-            size_hint: (.8, .8)
-            pos_hint: {'x':0.1, 'y':0.1}
+            size_hint: (.4, .7)
+            pos_hint: {'x':0.3, 'y':0.15}
             background_normal: ''
-            background_color: (43/255, 197/255, 232/255, 1)
+            background_color: (0,0,0,0)
+            canvas.before:
+                Color:
+                    rgba: (33/255,176/255,247/255,1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [5]
 
 
         Label:
-            text: 'Login'
+            text: 'Conciliações'
             pos_hint: {'x':0.4, 'y':0.7}
-            color: (0,0,0,1)
+            color: (1,1,1,1)
             size_hint: (.2, .1)
-            font_size: 30
+            font_size: 40
+            font_name: 'Impact'
 
         Label:
             id: user
-            text: 'Escolha o usuário:'
-            font_size: 32
-            pos_hint: {'x':0.4, 'y':0.6}
+            text: 'Selecione o usuário:'
+            font_size: 20
+            pos_hint: {'x':0.4, 'y':0.55}
             size_hint: (.2, .1)
 
         Spinner:
             id: spinner_id
             text: 'Usuários'
-            values: ['Leandro Oliveira', 'Mariclea Martini', 'Michele Bernardino', 'Paulo França']
+            values: root.lista_usuarios
             size_hint: (.2, .05)
             pos_hint: {'x':0.4, 'y':0.5}
             background_normal: ''
-            background_color: (1,1,1,1)
-            color: (0,0,0,1)
+            background_color: (36/255,100/255,203/255,1)
+            color: (1,1,1,1)
+
 
         Button:
-            size_hint: (.2, .1)
+            size_hint: (.15, .1)
             text: 'Entrar'
-            font_size: 20
-            pos_hint: {'x':0.4, 'y':0.3}
+            font_size: 24
+            pos_hint: {'x':0.425, 'y':0.3}
+            color: (36/255,100/255,203/255,1)
             background_normal: ''
-            background_color: (0,1,0,1)
+            background_color: (1,1,1,0)
+            canvas.before:
+                Color:
+                    rgba: (1,1,1,1)
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [5]
+
+
             on_release:
                 app.root.current = 'validar'
                 #app.entrar(spinner_id)
@@ -74,23 +98,108 @@
             color: (0,0,0,1)
             on_text: root.on_spinner_select(self.text)
 
+        Label:
+            text: root.manager.get_screen('main').lista_usuarios[0]
+            font_size: 16
+            pos_hint: {'x':0.3, 'y':0.3}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+        MDIcon:
+            icon: "gmail"
+            pos_hint: {"x": .45, "y": 0.3}
+            color: (1,0,1,1)
+
+        Label:
+            text: root.manager.get_screen('main').lista_usuarios[1]
+            font_size: 16
+            pos_hint: {'x':0.3, 'y':0.25}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+
+
+        Label:
+            text: root.manager.get_screen('main').lista_usuarios[2]
+            font_size: 16
+            pos_hint: {'x':0.3, 'y':0.20}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+        Label:
+            text: root.meu_status
+            font_size: 16
+            pos_hint: {'x':0.5, 'y':0.3}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+        MDIcon:
+            icon: "gmail"
+            pos_hint: {"x": .45, "y": 0.3}
+            color: (1,0,1,1)
+
+        Label:
+            text: root.meu_status1
+            font_size: 16
+            pos_hint: {'x':0.5, 'y':0.25}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+
+
+        Label:
+            text: root.meu_status2
+            font_size: 16
+            pos_hint: {'x':0.5, 'y':0.20}
+            size_hint: (.2, .1)
+            color: (0,0,0,1)
+
+
         Button:
             size_hint: (.2, .1)
-            text: 'Gerar Relatório'
+            text: 'Verificar'
             font_size: 20
-            pos_hint: {'x':0.4, 'y':0.4}
+            pos_hint: {'x':0.25, 'y':0.4}
             background_normal: ''
             background_color: (0,1,1,1)
             color: (0,0,0,1)
             on_press:
-                root.validacao()
+                root.status()
+
+
+        Button:
+            id: retorno_botao
+            size_hint: (.2, .1)
+            text: 'Gerar Relatório'
+            font_size: 20
+            pos_hint: {'x':0.55, 'y':0.4}
+            background_normal: ''
+            background_color: (0,1,1,1)
+            color: (0,0,0,1)
+            on_press:
                 app.root.current = 'teste1'
 
+
+        Button:
+            id: assina_ger
+            size_hint: (.2, .1)
+            text: 'Assinar'
+            font_size: 20
+            pos_hint: {'x':0.4, 'y':0.1}
+            background_normal: ''
+            background_color: (0,1,1,1)
+            color: (0,0,0,1)
+            disabled: not root.status_btn
+            on_press:
+                root.assina_gestor()
 
 
 <BoxTeste>:
 
-    on_enter: root.add_datatable()
+    on_enter:
+        root.validacao()
+        root.add_datatable()
+
     name: 'teste1'
 
     FloatLayout:
@@ -99,14 +208,25 @@
 
         Button:
             size_hint: (.15, .1)
-            text: 'Gerar Relatório'
+            text: 'Voltar'
             font_size: 20
-            pos_hint: {'x':0.3, 'y':0.05}
+            pos_hint: {'x':0.2, 'y':0.05}
             background_normal: ''
-            background_color: (0.2,0,1,1)
-            color: (0,0,0,1)
+            background_color: (3/255,169/255,224/255,1)
+            color: (1,1,1,1)
             on_press:
                 app.root.current = 'validar'
+
+        Button:
+            size_hint: (.15, .1)
+            text: 'Assinar'
+            font_size: 20
+            pos_hint: {'x':0.42, 'y':0.05}
+            background_normal: ''
+            background_color: (3/255,169/255,224/255,1)
+            color: (1,1,1,1)
+            on_press:
+                root.assinar()
 
 
 
