@@ -1,6 +1,8 @@
 from kivy.clock import Clock
 from kivy.config import Config
 from kivy.properties import StringProperty, ListProperty, BooleanProperty
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from reportlab.pdfgen import canvas
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from win32com import client
@@ -16,6 +18,7 @@ import openpyxl
 import numpy as np
 from datetime import datetime, date
 from kivy.utils import get_color_from_hex
+from time import sleep
 from kivy.uix.image import Image
 # Window.size = (1280, 720)
 from dateutil.relativedelta import relativedelta
@@ -100,23 +103,7 @@ class DataWindow(Screen):
         else:
             self.status_btn = False
 
-    # def start_foo_thread(self, processo):
-    #     # global foo_thread
-    #     self.foo_thread = threading.Thread(target=processo)
-    #     self.foo_thread.daemon = True
-    #     self.popup = Popup(title='Test popup',
-    #                   content=Label(text='Gerando relatório'),
-    #                   size_hint=(None, None), size=(400, 400), auto_dismiss=False)
-    #     self.popup.open()
-    #
-    #     self.foo_thread.start()
-    #     Clock.schedule_interval(self.check_foo_thread, 5)
-    #
-    # def check_foo_thread(self, dt):
-    #     if self.foo_thread.is_alive():
-    #         Clock.schedule_interval(self.check_foo_thread, 5)
-    #     else:
-    #         self.popup.dismiss()
+
 
     def assina_gestor(self):
         self.caminho = 'G:\GECOT\CONCILIAÇÕES CONTÁBEIS\CONCILIAÇÕES_' + self.ids.spinner_id2.text[3:7] + \
@@ -164,8 +151,25 @@ class BoxTeste(Screen):
             for u in usuarios:
                 self.lista_usuarios.append(u.strip())
 
+    def start_foo_thread(self, processo):
+        # global foo_thread
+        self.foo_thread = threading.Thread(target=processo)
+        self.foo_thread.daemon = True
+        self.popup = Popup(title='Test popup',
+                           content=Label(text='Gerando relatório'),
+                           size_hint=(None, None), size=(400, 400), auto_dismiss=False)
+        self.popup.open()
+
+        self.foo_thread.start()
+        Clock.schedule_interval(self.check_foo_thread, 1)
+
+    def check_foo_thread(self, dt):
+        if self.foo_thread.is_alive():
+            Clock.schedule_interval(self.check_foo_thread, 1)
+        else:
+            self.popup.dismiss()
+
     def validacao(self):
-        # self.resultado = resultado
         pegar = self.manager.get_screen('validar')
         competencia = pegar.ids.spinner_id2.text
         self.caminho = 'G:\GECOT\CONCILIAÇÕES CONTÁBEIS\CONCILIAÇÕES_' + competencia[3:7] + \
@@ -269,7 +273,7 @@ class BoxTeste(Screen):
         if len(self.resultado) == 1:
             self.resultado.append(('','','','','','',''))
         print(self.resultado)
-
+        self.add_datatable()
 
     def add_datatable(self):
         self.data_tables = MDDataTable(pos_hint={'center_x': 0.5, 'y': 0.2},
