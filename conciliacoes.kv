@@ -20,6 +20,7 @@
     background_color: (1, 1, 1, 1)
     color: (0,0,0,1)
     background_down: ''
+    font_size: 16
 
 <LoginWindow>:
     name: "main"
@@ -28,14 +29,10 @@
         size: root.width, root.height
 
         Image:
-            #source: 'drew.jpg'
-            #allow_stretch: True
-           # keep_ratio: False
 
         Button:
             size_hint: (.4, .7)
             pos_hint: {'x':0.3, 'y':0.15}
-
 
         Label:
             text: 'Conciliações'
@@ -63,30 +60,16 @@
             color: (1,1,1,1)
             option_cls: Factory.get("MySpinnerOption")
 
-
-
-        Button:
-            size_hint: (.15, .1)
+        MDRectangleFlatButton:
+            size_hint: (.15, .08)
             text: 'Entrar'
             font_size: 24
             pos_hint: {'x':0.425, 'y':0.3}
-            color: (36/255,100/255,203/255,1)
-            background_normal: ''
-            background_color: (1,1,1,0)
-            canvas.before:
-                Color:
-                    rgba: (1,1,1,1)
-                RoundedRectangle:
-                    size: self.size
-                    pos: self.pos
-                    radius: [5]
-
-
+            text_color: (36/255,100/255,203/255,1)
+            #line_color: 0, 0, 1, 1
+            md_bg_color: (1, 1, 1, 1)
             on_release:
-                app.root.current = 'validar'
-                #app.entrar(spinner_id)
-
-
+                root.verifica_usuario()
 
 
 <DataWindow>
@@ -96,6 +79,16 @@
         size: root.width, root.height
 
         Image:
+
+        MDIconButton:
+            icon: 'arrow-left-bold-outline'
+            icon_size: '50dp'
+            pos_hint: {'x':0.01, 'y':0.9}
+            theme_text_color: "Custom"
+            text_color: (36/255,100/255,203/255,1)
+            on_press:
+                app.root.current = 'main'
+                root.manager.transition.direction = 'right'
 
         Button:
             size_hint: (.5, .8)
@@ -109,7 +102,6 @@
             font_size: 30
             font_name: 'Impact'
 
-
         Spinner:
             id: spinner_id2
             text: root.lista[0]
@@ -120,101 +112,108 @@
             background_color: (36/255,100/255,203/255,1)
             option_cls: Factory.get("MySpinnerOption")
             color: (1,1,1,1)
-            on_text: root.on_spinner_select(self.text)
+            on_text: root.mes_selecionado(self.text)
 
-
-
-        Button:
-            size_hint: (.15, .1)
+        MDRectangleFlatButton:
+            size_hint: (.15, .08)
             text: 'Verificar'
             font_size: 20
             pos_hint: {'x':0.325, 'y':0.5}
-            background_normal: ''
-            background_color: (1,1,1,1)
-            color: (36/255,100/255,203/255,1)
+            text_color: (36/255,100/255,203/255,1)
+            #line_color: 0, 0, 1, 1
+            md_bg_color: 1, 1, 1, 1
             on_press:
                 root.status()
 
-
-        Button:
+        MDRectangleFlatButton:
             id: retorno_botao
-            size_hint: (.15, .1)
+            size_hint: (.15, .08)
             text: 'Gerar Relatório'
             font_size: 20
             pos_hint: {'x':0.525, 'y':0.5}
-            background_normal: ''
-            background_color: (1,1,1,1)
-            color: (36/255,100/255,203/255,1)
+            text_color: (36/255,100/255,203/255,1)
+            #line_color: 0, 0, 1, 1
+            md_bg_color: 1, 1, 1, 1
             on_press:
                 app.root.current = 'teste1'
+                root.manager.transition.direction = 'left'
+                app.meu_popup()
+
+        MDRectangleFlatButton:
+            size_hint: (.35, .165)
+            pos_hint: {'x':0.325, 'y':0.27}
+            #text_color: (36/255,100/255,203/255,1)
+            line_color: (36/255,100/255,203/255,1)
+            md_bg_color: (36/255,100/255,203/255,1)
 
         MDIcon:
-            icon: "gmail"
-            pos_hint: {"x": .45, "y": 0.3}
-            color: (1,0,1,1)
+            icon: root.icone
+            pos_hint: {"x": .51, "y": 0.385}
+            color: root.cor
+            #md_bg_color: (0, 0, 0, 1)
+
+        MDIcon:
+            icon: root.icone1
+            pos_hint: {"x": .51, "y": 0.335}
+            color: root.cor1
+
+        MDIcon:
+            icon: root.icone2
+            pos_hint: {"x": .51, "y": 0.285}
+            color: root.cor2
+            #disabled: True
 
         Label:
             text: root.manager.get_screen('main').lista_usuarios[0]
-            font_size: 16
+            font_size: 18
             pos_hint: {'x':0.3, 'y':0.35}
             size_hint: (.2, .1)
-            color: (0,0,0,1)
-            borders: 2
+            color: (1,1,1,1)
 
         Label:
             text: root.manager.get_screen('main').lista_usuarios[1]
-            font_size: 16
+            font_size: 18
             pos_hint: {'x':0.3, 'y':0.30}
             size_hint: (.2, .1)
-            color: (0,0,0,1)
-
+            color: (1,1,1,1)
 
         Label:
             text: root.manager.get_screen('main').lista_usuarios[2]
-            font_size: 16
+            font_size: 18
             pos_hint: {'x':0.3, 'y':0.25}
             size_hint: (.2, .1)
-            color: (0,0,0,1)
-
-        MDIcon:
-            icon: "gmail"
-            pos_hint: {"x": .45, "y": 0.3}
-            color: (1,0,1,1)
+            color: (1,1,1,1)
 
         Label:
             text: root.meu_status
-            font_size: 16
+            font_size: 18
             pos_hint: {'x':0.5, 'y':0.35}
             size_hint: (.2, .1)
-            color: (0,0,0,1)
-
+            color: (1,1,1,1)
 
         Label:
             text: root.meu_status1
-            font_size: 16
+            font_size: 18
             pos_hint: {'x':0.5, 'y':0.30}
             size_hint: (.2, .1)
-            color: (0,0,0,1)
-
+            color: (1,1,1,1)
 
         Label:
             text: root.meu_status2
-            font_size: 16
+            font_size: 18
             pos_hint: {'x':0.5, 'y':0.25}
             size_hint: (.2, .1)
-            color: (0,0,0,1)
+            color: (1,1,1,1)
 
-
-
-        Button:
+        MDRectangleFlatButton:
             id: assina_ger
-            size_hint: (.15, .1)
+            size_hint: (.15, .08)
             text: 'Assinar'
             font_size: 20
             pos_hint: {'x':0.425, 'y':0.15}
-            background_normal: ''
-            background_color: (0,1,1,1)
-            color: (0,0,0,1)
+            text_color: (36/255,100/255,203/255,1)
+            #line_color: 0, 0, 1, 1
+            md_bg_color: 1, 1, 1, 1
             disabled: not root.status_btn
             on_press:
                 root.assina_gestor()
@@ -223,8 +222,9 @@
 <BoxTeste>:
 
     on_enter:
-        root.start_foo_thread(root.validacao)
-        #root.add_datatable()
+
+        root.validacao()
+        app.popupWindow.dismiss()
 
     name: 'teste1'
 
@@ -234,16 +234,15 @@
 
         Image:
 
-        Button:
-            size_hint: (.15, .1)
-            text: 'Voltar'
-            font_size: 20
-            pos_hint: {'x':0.2, 'y':0.05}
-            background_normal: ''
-            background_color: (3/255,169/255,224/255,1)
-            color: (1,1,1,1)
+        MDIconButton:
+            icon: 'arrow-left-bold-outline'
+            icon_size: '50dp'
+            pos_hint: {'x':0.01, 'y':0.9}
+            theme_text_color: "Custom"
+            text_color: (36/255,100/255,203/255,1)
             on_press:
                 app.root.current = 'validar'
+                root.manager.transition.direction = 'right'
 
         Button:
             size_hint: (.15, .1)
@@ -255,7 +254,6 @@
             color: (1,1,1,1)
             on_press:
                 root.assinar()
-
 
 
 WindowManager:
