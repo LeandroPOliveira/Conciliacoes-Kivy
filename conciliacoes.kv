@@ -23,7 +23,7 @@
     font_size: 16
 
 <LoginWindow>:
-    name: "main"
+    name: "login"
 
     FloatLayout:
         size: root.width, root.height
@@ -69,7 +69,8 @@
             #line_color: 0, 0, 1, 1
             md_bg_color: (1, 1, 1, 1)
             on_release:
-                root.verifica_usuario()
+                app.root.current = 'validar'
+                #root.verifica_usuario()
 
 
 <DataWindow>
@@ -87,7 +88,7 @@
             theme_text_color: "Custom"
             text_color: (36/255,100/255,203/255,1)
             on_press:
-                app.root.current = 'main'
+                app.root.current = 'login'
                 root.manager.transition.direction = 'right'
 
         Button:
@@ -164,21 +165,21 @@
             #disabled: True
 
         Label:
-            text: root.manager.get_screen('main').lista_usuarios[0]
+            text: root.manager.get_screen('login').lista_usuarios[1]
             font_size: 18
             pos_hint: {'x':0.3, 'y':0.35}
             size_hint: (.2, .1)
             color: (1,1,1,1)
 
         Label:
-            text: root.manager.get_screen('main').lista_usuarios[1]
+            text: root.manager.get_screen('login').lista_usuarios[2]
             font_size: 18
             pos_hint: {'x':0.3, 'y':0.30}
             size_hint: (.2, .1)
             color: (1,1,1,1)
 
         Label:
-            text: root.manager.get_screen('main').lista_usuarios[2]
+            text: root.manager.get_screen('login').lista_usuarios[3]
             font_size: 18
             pos_hint: {'x':0.3, 'y':0.25}
             size_hint: (.2, .1)

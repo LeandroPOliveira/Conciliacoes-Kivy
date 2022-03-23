@@ -30,12 +30,14 @@ class LoginWindow(Screen):
             for user in self.usuarios:
                 self.lista_usuarios.append(user.split(';')[0])
                 self.dicio.update({user.split(';')[0]: user.split(';')[1]})
+
     def verifica_usuario(self):
         if self.dicio[self.ids.spinner_id.text].strip() == getpass.getuser():
             self.manager.current = 'validar'
         else:
             self.dialog = MDDialog(text="Usuário inválido!", radius=[20, 7, 20, 7], )
             self.dialog.open()
+
 
 class DataWindow(Screen):
     meu_status = StringProperty('Não Verificado')
@@ -52,6 +54,9 @@ class DataWindow(Screen):
         self.lista = []
         self.validos = []
 
+        with open('pasta.txt', encoding='utf-8') as user:
+            self.caminho = user.readlines()
+            self.caminho = [caminho.rstrip() for caminho in self.caminho]
 
         for i in range(12):
             mes = datetime.today()
@@ -60,23 +65,34 @@ class DataWindow(Screen):
 
     def mes_selecionado(self, text):
         self.text = text
-        return self.text
+        with open('pasta.txt', 'r', encoding='utf-8') as path:
+            ano_competencia = path.read()
+        ano_competencia = ano_competencia.replace('20xx', self.text)
+
+        with open('pasta.txt', 'w', encoding='utf-8') as path:
+            path.write(ano_competencia)
+        return self.text, self.caminho
+
 
     def status(self):  # Verifica se a situação das conciliações, se está validada ou pendente
-        with open('dados.txt', 'r') as f:
-            lines = f.readlines()
+        print(self.caminho)
+        with open(os.path.join(*self.caminho[0].split('\\')[:3], 'dados.txt'), 'r') as f:
+            lines = f.readlines()[1:]
             self.meu_status = ''
             self.meu_status1 = ''
             self.meu_status2 = ''
             for i in lines:
                 i = i.split(';')
-                if i[0] == self.text and i[1] == self.lista_usuarios[0] and i[2].strip() == 'OK':
+                if i[0] == self.text and i[1] == self.manager.get_screen('login').lista_usuarios[1] \
+                        and i[2].strip() == 'OK':
                     self.meu_status, self.icone, self.cor = 'Validado', 'check-circle', [0, 1, 0, 1]
                     self.validos.append('OK')
-                elif i[0] == self.text and i[1] == self.lista_usuarios[1] and i[2].strip() == 'OK':
+                elif i[0] == self.text and i[1] == self.manager.get_screen('login').lista_usuarios[2] \
+                        and i[2].strip() == 'OK':
                     self.meu_status1, self.icone1, self.cor1 = 'Validado', 'check-circle', [0, 1, 0, 1]
                     self.validos.append('OK')
-                elif i[0] == self.text and i[1] == self.lista_usuarios[2] and i[2].strip() == 'OK':
+                elif i[0] == self.text and i[1] == self.manager.get_screen('login').lista_usuarios[3] \
+                        and i[2].strip() == 'OK':
                     self.meu_status2, self.icone2, self.cor2 = 'Validado', 'check-circle', [0, 1, 0, 1]
                     self.validos.append('OK')
                 else:
@@ -87,29 +103,25 @@ class DataWindow(Screen):
                     if self.meu_status2 == '':
                         self.meu_status2, self.icone2, self.cor2 = 'Validação Pendente', 'alert-circle', [1, 0, 0, 1]
 
-        pegar = self.manager.get_screen('main')
-        usuario = pegar.ids.spinner_id.text
-        if usuario == 'Paulo França' and len(self.validos) >= 3:
+        usuario = self.manager.get_screen('login').ids.spinner_id.text
+        if usuario == self.manager.get_screen('login').lista_usuarios[0] and len(self.validos) >= 3:
             self.status_btn = True
         else:
             self.status_btn = False
 
     def assina_gestor(self):
-        self.caminho = 'G:\GECOT\CONCILIAÇÕES CONTÁBEIS\CONCILIAÇÕES_' + self.ids.spinner_id2.text[3:7] + \
-                       '\\' + self.ids.spinner_id2.text
+        self.caminho_mes = os.path.join(self.caminho[0], self.ids.spinner_id2.text)
         c = canvas.Canvas('watermark.pdf')
         # Draw the image at x, y. I positioned the x,y to be where i like here
-        c.drawImage(self.manager.get_screen('main').ids.spinner_id.text + '.png', 350, 40, 150, 90,
+        c.drawImage(self.manager.get_screen('login').ids.spinner_id.text + '.png', 350, 40, 150, 90,
                     mask='auto')
         c.save()
-        watermark = PdfFileReader(
-            open("watermark.pdf", "rb"))
+        watermark = PdfFileReader(open("watermark.pdf", "rb"))
 
-        lista = []
-        for file in os.listdir(self.caminho):
+        for file in os.listdir(self.caminho_mes):
             if file.endswith(".pdf"):
                 output_file = PdfFileWriter()
-                with open(self.caminho + '\\' + file, "rb") as f:
+                with open(self.caminho_mes + '\\' + file, "rb") as f:
                     input_file = PdfFileReader(f)
                     # Number of pages in input document
                     page_count = input_file.getNumPages()
@@ -121,17 +133,16 @@ class DataWindow(Screen):
                             input_page.mergePage(watermark.getPage(0))
                         output_file.addPage(input_page)
 
-                    with open(self.caminho + '\\' + file[8:], "wb") as outputStream:
+                    with open(self.caminho_mes + '\\' + file[8:], "wb") as outputStream:
                         output_file.write(outputStream)
 
-                os.remove(self.caminho + '\\' + file)
+                os.remove(self.caminho_mes + '\\' + file)
 
 
 class BoxTeste(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.data_tables = None
-
         self.lista_usuarios = []
         with open('usuarios.txt') as user:
             usuarios = user.readlines()
@@ -139,11 +150,10 @@ class BoxTeste(Screen):
                 self.lista_usuarios.append(u.strip())
 
     def validacao(self):
-        pegar = self.manager.get_screen('validar')
-        competencia = pegar.ids.spinner_id2.text
-        self.caminho = 'G:\GECOT\CONCILIAÇÕES CONTÁBEIS\CONCILIAÇÕES_' + competencia[3:7] + \
-                       '\\' + competencia
-        pasta1 = os.listdir(self.caminho)
+        self.caminho_mes = os.path.join(self.manager.get_screen('validar').caminho[0],
+                                        self.manager.get_screen('validar').ids.spinner_id2.text)
+
+        pasta1 = os.listdir(self.caminho_mes)
         lista = [[], [], [], [], []]
         for i in pasta1[::-1]:
             if i.startswith('~'):
@@ -151,7 +161,8 @@ class BoxTeste(Screen):
 
         for i in pasta1:
             if i.endswith('.xlsx'):
-                wb = openpyxl.load_workbook(self.caminho + '\\' + i, read_only=True)
+                wb = openpyxl.load_workbook(os.path.join(self.caminho_mes, i),
+                                            read_only=True)
                 sheets = wb.sheetnames
                 ws = wb[sheets[0]]
                 try:
@@ -168,28 +179,26 @@ class BoxTeste(Screen):
                 lista[1].append(data1)
                 lista[2].append(valor_deb)
                 lista[3].append(valor_cred)
-
                 wb.close()
 
         self.data = pd.DataFrame(lista).T
-
         self.data.columns = ['Conta', 'Data', 'Debito', 'Credito', 'Balancete']
-
         # Listar planilhas dos balancetes
-        self.pasta = 'G:\GECOT\CONCILIAÇÕES CONTÁBEIS\CONCILIAÇÕES_' + competencia[3:7] + \
-                '\BALANCETES\SOCIETÁRIOS\\'
+        self.pasta_balancetes = self.manager.get_screen('validar').caminho[1]
 
-        lista = os.listdir(self.pasta)
+        lista = os.listdir(self.pasta_balancetes)
 
         lista4 = {}
         for i in lista:
-            if competencia in i or competencia.replace('.', '') in i:
-                tempo = os.path.getmtime(self.pasta + i)
+            if self.manager.get_screen('validar').ids.spinner_id2.text in i or \
+                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in i:
+                tempo = os.path.getmtime(os.path.join(self.pasta_balancetes, i))
                 tempo2 = datetime.fromtimestamp(tempo)
                 lista4.update({i: tempo2})
 
         dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
-        dados = pd.read_excel(self.pasta + dados, skiprows=12)
+        print(dados)
+        dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), skiprows=12)
         dados = pd.DataFrame(dados)
         apoio = pd.read_excel('contas.xlsx')
         apoio = pd.DataFrame(apoio)
@@ -198,7 +207,8 @@ class BoxTeste(Screen):
                 if row1['Conta'] == row['Conta CSPE']:
                     self.data['Balancete'].loc[index1] = dados.loc[index, ' Saldo Acumulado']
 
-        self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(pd.to_numeric)
+        self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
+            pd.to_numeric)
         self.data.fillna(0, inplace=True)
         self.data = self.data.round(2)
         self.data['Conciliação'] = self.data['Debito'] - self.data['Credito']
@@ -206,9 +216,11 @@ class BoxTeste(Screen):
         self.data['Diferença'] = self.data['Conciliação'] - self.data['Balancete']
         self.data = pd.merge(self.data, apoio[['Conta', 'Usuario']], on=['Conta'], how='left')
         self.data['Status'] = np.where(self.data['Diferença'] != 0, 'Diferença de Valor',
-                                  (np.where(self.data['Data'] != competencia, 'Data Incorreta', 'OK')))
-        if self.manager.get_screen('main').ids.spinner_id.text != self.lista_usuarios[3]:
-            self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('main').ids.spinner_id.text]
+                                       (np.where(
+                                           self.data['Data'] != self.manager.get_screen('validar').ids.spinner_id2.text,
+                                           'Data Incorreta', 'OK')))
+        if self.manager.get_screen('login').ids.spinner_id.text != self.lista_usuarios[3]:
+            self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('login').ids.spinner_id.text]
         self.data = self.data.round(2)
         self.resultado = self.data.to_records(index=False)
         self.resultado = list(self.resultado)
@@ -237,11 +249,8 @@ class BoxTeste(Screen):
         self.data_tables.bind(on_check_press=self.checked)
 
     def checked(self, instance_table, current_row):
-        pegar = self.manager.get_screen('validar')
-        competencia = pegar.ids.spinner_id2.text
-        self.caminho = 'G:\GECOT\CONCILIAÇÕES CONTÁBEIS\CONCILIAÇÕES_' + competencia[3:7] + \
-                       '\\' + competencia
-        os.startfile(self.caminho + '\\' + 'Conta ' + current_row[0].replace('.', '') + '.xlsx')
+        os.startfile(os.path.join(self.caminho_mes, 'Conta ' +
+                                  current_row[0].replace('.', '') + '.xlsx'))
 
     def assinar(self):
         valida = self.data['Status'].unique()
@@ -254,7 +263,7 @@ class BoxTeste(Screen):
             # Create the watermark from an image
             c = canvas.Canvas('watermark.pdf')
             # Draw the image at x, y. I positioned the x,y to be where i like here
-            c.drawImage(self.manager.get_screen('main').ids.spinner_id.text + '.png', 40, 50, 150, 100,
+            c.drawImage(self.manager.get_screen('login').ids.spinner_id.text + '.png', 40, 50, 150, 100,
                         mask='auto')
             c.save()
 
@@ -262,10 +271,11 @@ class BoxTeste(Screen):
                 # Open Microsoft Excel
                 excel = client.Dispatch("Excel.Application")
                 # Read Excel File
-                sheets = excel.Workbooks.Open(self.caminho + '\\' + i)
+                print(self.caminho_mes)
+                sheets = excel.Workbooks.Open(self.caminho_mes + '\\' + i)
                 work_sheets = sheets.Worksheets[0]
                 # Convert into PDF File
-                path = self.caminho + '\\' + 'teste ' + i.replace('.xlsx', '.pdf')
+                path = os.path.join(self.caminho_mes, 'teste ' + i.replace('.xlsx', '.pdf'))
                 work_sheets.ExportAsFixedFormat(0, path)
 
                 # Get the watermark file you just created
@@ -292,7 +302,8 @@ class BoxTeste(Screen):
                         output2.addPage(input_page)
 
                     # finally, write "output" to document-output.pdf
-                    with open(self.caminho + '\\' + 'pendente' + i.replace('.xlsx', '.pdf'), "wb") as outputStream:
+                    with open(os.path.join(self.caminho_mes, 'pendente',
+                                           i.replace('.xlsx', '.pdf')), "wb") as outputStream:
                         output2.write(outputStream)
 
                 os.remove(path)
@@ -300,14 +311,14 @@ class BoxTeste(Screen):
                 # excel.Quit()
 
             adicionar = [self.manager.get_screen('validar').ids.spinner_id2.text,
-                         self.manager.get_screen('main').ids.spinner_id.text, 'OK']
+                         self.manager.get_screen('login').ids.spinner_id.text, 'OK']
             adicionar = ';'.join(adicionar)
 
             with open('dados.txt', 'a') as f:
                 f.write(f'\n{adicionar}')
 
         else:
-            self.dialog = MDDialog(text="Erro! Verificar pendências!", radius=[20, 7, 20, 7],)
+            self.dialog = MDDialog(text="Erro! Verificar pendências!", radius=[20, 7, 20, 7], )
             self.dialog.open()
 
 
@@ -320,8 +331,8 @@ class Example(MDApp):
 
     def meu_popup(self):
         Example.popupWindow = Popup(title='Conciliações',
-                               content=Label(text='Gerando relatório...', font_size=20),
-                               size_hint=(None, None), size=(400, 300), auto_dismiss=False)
+                                    content=Label(text='Gerando relatório...', font_size=20),
+                                    size_hint=(None, None), size=(400, 300), auto_dismiss=False)
         Example.popupWindow.open()
 
     def build(self):
