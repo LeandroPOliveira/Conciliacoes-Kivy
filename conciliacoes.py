@@ -18,6 +18,8 @@ from datetime import datetime
 from kivy.utils import get_color_from_hex
 from dateutil.relativedelta import relativedelta
 import getpass
+from zipfile import ZipFile
+from os.path import basename
 
 
 class LoginWindow(Screen):
@@ -65,6 +67,8 @@ class DataWindow(Screen):
 
     def mes_selecionado(self, text):
         self.text = text
+        # Arquivo que serve como base para identificar a pasta de trabalho a ser utilizada, o ano é alterado de acordo
+        # com a competencia selecionada pelo usuário
         with open('pasta.txt', 'r', encoding='utf-8') as path:
             ano_competencia = path.read()
         ano_competencia = ano_competencia.replace('20xx', self.text)
@@ -73,15 +77,13 @@ class DataWindow(Screen):
             path.write(ano_competencia)
         return self.text, self.caminho
 
-
     def status(self):  # Verifica se a situação das conciliações, se está validada ou pendente
-        print(self.caminho)
         with open(os.path.join(*self.caminho[0].split('\\')[:3], 'dados.txt'), 'r') as f:
             lines = f.readlines()[1:]
             self.meu_status = ''
             self.meu_status1 = ''
             self.meu_status2 = ''
-            for i in lines:
+            for i in lines:  # verifica a situação da competência selecionada, usuarios que validaram ou não
                 i = i.split(';')
                 if i[0] == self.text and i[1] == self.manager.get_screen('login').lista_usuarios[1] \
                         and i[2].strip() == 'OK':
@@ -111,8 +113,9 @@ class DataWindow(Screen):
 
     def assina_gestor(self):
         self.caminho_mes = os.path.join(self.caminho[0], self.ids.spinner_id2.text)
+        # Criar pdf com assinatura
         c = canvas.Canvas('watermark.pdf')
-        # Draw the image at x, y. I positioned the x,y to be where i like here
+        # posicionar a imagem da assinatura nas coordenadas x e y
         c.drawImage(self.manager.get_screen('login').ids.spinner_id.text + '.png', 350, 40, 150, 90,
                     mask='auto')
         c.save()
@@ -136,13 +139,21 @@ class DataWindow(Screen):
                     with open(self.caminho_mes + '\\' + file[8:], "wb") as outputStream:
                         output_file.write(outputStream)
 
+                with ZipFile(os.path.join(self.caminho_mes, self.ids.spinner_id2.text + '.zip'), 'a') as zip_arquivo:
+                    zip_arquivo.write(os.path.join(self.caminho_mes, file[8:]),
+                                      basename(os.path.join(self.caminho_mes, file[8:])))
+
                 os.remove(self.caminho_mes + '\\' + file)
+                os.remove(self.caminho_mes + '\\' + file[8:])
+
+        self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
+        self.dialog.open()
 
 
 class BoxTeste(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.data_tables = None
+        self.tabela_dados = None
         self.lista_usuarios = []
         with open('usuarios.txt') as user:
             usuarios = user.readlines()
@@ -197,7 +208,6 @@ class BoxTeste(Screen):
                 lista4.update({i: tempo2})
 
         dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
-        print(dados)
         dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), skiprows=12)
         dados = pd.DataFrame(dados)
         apoio = pd.read_excel('contas.xlsx')
@@ -208,7 +218,7 @@ class BoxTeste(Screen):
                     self.data['Balancete'].loc[index1] = dados.loc[index, ' Saldo Acumulado']
 
         self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
-            pd.to_numeric)
+            pd.to_numeric, errors='coerce')
         self.data.fillna(0, inplace=True)
         self.data = self.data.round(2)
         self.data['Conciliação'] = self.data['Debito'] - self.data['Credito']
@@ -226,61 +236,56 @@ class BoxTeste(Screen):
         self.resultado = list(self.resultado)
         if len(self.resultado) == 1:
             self.resultado.append(('', '', '', '', '', '', ''))
-        print(self.resultado)
-        self.add_datatable()
+        self.add_tabela()
 
-    def add_datatable(self):
-        self.data_tables = MDDataTable(pos_hint={'center_x': 0.5, 'y': 0.2},
-                                       size_hint=(0.8, 0.7),
-                                       use_pagination=True, rows_num=10,
-                                       background_color_header=get_color_from_hex("#03a9e0"),
-                                       check=True,
-                                       column_data=[("[color=#ffffff]Conta[/color]", dp(30)),
-                                                    ("[color=#ffffff]Data[/color]", dp(20)),
-                                                    ("[color=#ffffff]Balancete[/color]", dp(30)),
-                                                    ("[color=#ffffff]Conciliação[/color]", dp(30)),
-                                                    ("[color=#ffffff]Diferença[/color]", dp(20)),
-                                                    ("[color=#ffffff]Usuario[/color]", dp(35)),
-                                                    ("[color=#ffffff]Status[/color]", dp(35)),
-                                                    ],
-                                       row_data=self.resultado, elevation=1)
+    def add_tabela(self):
+        self.tabela_dados = MDDataTable(pos_hint={'center_x': 0.5, 'y': 0.2},
+                                        size_hint=(0.8, 0.7),
+                                        use_pagination=True, rows_num=10,
+                                        background_color_header=get_color_from_hex("#03a9e0"),
+                                        check=True,
+                                        column_data=[("[color=#ffffff]Conta[/color]", dp(30)),
+                                                     ("[color=#ffffff]Data[/color]", dp(20)),
+                                                     ("[color=#ffffff]Balancete[/color]", dp(30)),
+                                                     ("[color=#ffffff]Conciliação[/color]", dp(30)),
+                                                     ("[color=#ffffff]Diferença[/color]", dp(20)),
+                                                     ("[color=#ffffff]Usuario[/color]", dp(35)),
+                                                     ("[color=#ffffff]Status[/color]", dp(35)),
+                                                     ],
+                                        row_data=self.resultado, elevation=1)
 
-        self.add_widget(self.data_tables)
-        self.data_tables.bind(on_check_press=self.checked)
+        self.add_widget(self.tabela_dados)
+        self.tabela_dados.bind(on_check_press=self.checked)
 
     def checked(self, instance_table, current_row):
         os.startfile(os.path.join(self.caminho_mes, 'Conta ' +
                                   current_row[0].replace('.', '') + '.xlsx'))
 
-    def assinar(self):
+    def assina(self):
         valida = self.data['Status'].unique()
-        if 'OK' in valida and len(valida) == 1:
+        if 'OK' in valida and len(valida) == 1:  # checa se não existem contas que não estão validadas
             lista3 = []
             for i in self.data['Conta']:
                 conta = 'Conta ' + i.replace('.', '') + '.xlsx'
                 lista3.append(conta)
 
-            # Create the watermark from an image
+            # Criar pdf com assinatura
             c = canvas.Canvas('watermark.pdf')
-            # Draw the image at x, y. I positioned the x,y to be where i like here
+            # posicionar a imagem da assinatura nas coordenadas x e y
             c.drawImage(self.manager.get_screen('login').ids.spinner_id.text + '.png', 40, 50, 150, 100,
                         mask='auto')
             c.save()
 
-            for i in lista3:
-                # Open Microsoft Excel
+            for i in lista3:  # converter arquivos excel para pdf
+
                 excel = client.Dispatch("Excel.Application")
-                # Read Excel File
-                print(self.caminho_mes)
                 sheets = excel.Workbooks.Open(self.caminho_mes + '\\' + i)
                 work_sheets = sheets.Worksheets[0]
-                # Convert into PDF File
                 path = os.path.join(self.caminho_mes, 'teste ' + i.replace('.xlsx', '.pdf'))
                 work_sheets.ExportAsFixedFormat(0, path)
 
-                # Get the watermark file you just created
+                # Buscar a assinatura criada
                 watermark = PdfFileReader(open("watermark.pdf", "rb"))
-                # Get our files ready
                 output = PdfFileWriter()
 
                 with open(path, "rb") as provisorio:
@@ -294,28 +299,33 @@ class BoxTeste(Screen):
 
                     page_count = output.getNumPages()
                     output2 = PdfFileWriter()
-                    # Go through all the input file pages to add a watermark to them
+                    # percorrer o arquivo para unir o pdf de assinatura na última pagina do arquivo principal
                     for page_number in range(page_count):
                         input_page = output.getPage(page_number)
                         if page_number == page_count - 1:
                             input_page.mergePage(watermark.getPage(0))
                         output2.addPage(input_page)
 
-                    # finally, write "output" to document-output.pdf
-                    with open(os.path.join(self.caminho_mes, 'pendente',
-                                           i.replace('.xlsx', '.pdf')), "wb") as outputStream:
+                    # exportar o arquivo pdf com o nome sufixo pendente, que aguardará assinatura do gestor
+                    with open(os.path.join(self.caminho_mes, 'pendente' +
+                                                             i.replace('.xlsx', '.pdf')), "wb") as outputStream:
                         output2.write(outputStream)
 
                 os.remove(path)
                 sheets.Close(True)
-                # excel.Quit()
 
+            #  Após assinatura, criar um log simples em um arquivo de texto que permitirá ao sistema verificar o
+            #  usuario que validou a sua respectiva conciliação e o período
             adicionar = [self.manager.get_screen('validar').ids.spinner_id2.text,
                          self.manager.get_screen('login').ids.spinner_id.text, 'OK']
             adicionar = ';'.join(adicionar)
-
-            with open('dados.txt', 'a') as f:
+            # salvar observação no arquivo
+            with open(os.path.join(*self.manager.get_screen('validar').caminho[0].split('\\')[:3], 'dados.txt'),
+                      'a') as f:
                 f.write(f'\n{adicionar}')
+
+            self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
+            self.dialog.open()
 
         else:
             self.dialog = MDDialog(text="Erro! Verificar pendências!", radius=[20, 7, 20, 7], )
