@@ -17,7 +17,7 @@
             radius: [5]
 
 <MySpinnerOption@SpinnerOption>:
-    background_color: (1, 1, 1, 1)
+    background_color: (166/255, 234/255, 255/255, 1)
     color: (0,0,0,1)
     background_down: ''
     font_size: 16
@@ -39,38 +39,32 @@
             pos_hint: {'x':0.4, 'y':0.7}
             color: (1,1,1,1)
             size_hint: (.2, .1)
-            font_size: 40
+            font_size: 50
             font_name: 'Impact'
 
-        Label:
-            id: user
-            text: 'Selecione o usuário:'
+        MDRectangleFlatIconButton:
+            icon: "account"
+            icon_color: (1,1,1,1)
+            id: drop_item
             font_size: 20
-            pos_hint: {'x':0.4, 'y':0.55}
-            size_hint: (.2, .1)
-
-        Spinner:
-            id: spinner_id
-            text: 'Usuários'
-            values: root.lista_usuarios
-            size_hint: (.2, .05)
+            size_hint: (.2, .07)
             pos_hint: {'x':0.4, 'y':0.5}
-            background_normal: ''
-            background_color: (36/255,100/255,203/255,1)
-            color: (1,1,1,1)
-            option_cls: Factory.get("MySpinnerOption")
+            text_color: (1,1,1,1)
+            md_bg_color: (36/255,100/255,203/255,1)
+            text: ' Selecione o Usuário'
+            on_release: root.abre_menu()
 
         MDRectangleFlatButton:
             size_hint: (.15, .08)
             text: 'Entrar'
-            font_size: 24
+            font_size: 26
             pos_hint: {'x':0.425, 'y':0.3}
             text_color: (36/255,100/255,203/255,1)
             #line_color: 0, 0, 1, 1
             md_bg_color: (1, 1, 1, 1)
             on_release:
-                app.root.current = 'validar'
-                #root.verifica_usuario()
+                #app.root.current = 'validar'
+                root.verifica_usuario()
 
 
 <DataWindow>
@@ -100,11 +94,12 @@
             pos_hint: {'x':0.4, 'y':0.75}
             size_hint: (.2, .1)
             color: (1,1,1,1)
-            font_size: 30
+            font_size: 50
             font_name: 'Impact'
 
         Spinner:
             id: spinner_id2
+            font_size: 18
             text: root.lista[0]
             values: root.lista
             size_hint: (.2, .05)
@@ -118,7 +113,7 @@
         MDRectangleFlatButton:
             size_hint: (.15, .08)
             text: 'Verificar'
-            font_size: 20
+            font_size: 24
             pos_hint: {'x':0.325, 'y':0.5}
             text_color: (36/255,100/255,203/255,1)
             #line_color: 0, 0, 1, 1
@@ -130,7 +125,7 @@
             id: retorno_botao
             size_hint: (.15, .08)
             text: 'Gerar Relatório'
-            font_size: 20
+            font_size: 24
             pos_hint: {'x':0.525, 'y':0.5}
             text_color: (36/255,100/255,203/255,1)
             #line_color: 0, 0, 1, 1
@@ -210,7 +205,7 @@
             id: assina_ger
             size_hint: (.15, .08)
             text: 'Assinar'
-            font_size: 20
+            font_size: 24
             pos_hint: {'x':0.425, 'y':0.15}
             text_color: (36/255,100/255,203/255,1)
             #line_color: 0, 0, 1, 1
@@ -245,14 +240,13 @@
                 app.root.current = 'validar'
                 root.manager.transition.direction = 'right'
 
-        Button:
-            size_hint: (.15, .1)
+        MDRectangleFlatButton:
+            size_hint: (.15, .08)
             text: 'Assinar'
-            font_size: 20
+            font_size: 24
             pos_hint: {'x':0.42, 'y':0.05}
-            background_normal: ''
-            background_color: (3/255,169/255,224/255,1)
-            color: (1,1,1,1)
+            text_color: 1, 1, 1, 1
+            md_bg_color: (36/255,100/255,203/255,1)
             on_press:
                 root.assina()
 

@@ -2,6 +2,7 @@ from kivy.properties import StringProperty, ListProperty, BooleanProperty
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivymd.uix.dialog import MDDialog
+from kivymd.uix.menu import MDDropdownMenu
 from reportlab.pdfgen import canvas
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from win32com import client
@@ -33,8 +34,19 @@ class LoginWindow(Screen):
                 self.lista_usuarios.append(user.split(';')[0])
                 self.dicio.update({user.split(';')[0]: user.split(';')[1]})
 
+    def abre_menu(self):
+        menu_items = [{"viewclass": "OneLineListItem", "text": i, "height": dp(56), "on_release":
+        lambda x=i: self.set_item(x), } for i in self.lista_usuarios]
+
+        self.menu = MDDropdownMenu(caller=self.ids.drop_item, items=menu_items, position="center", width_mult=4, )
+        self.menu.open()
+
+    def set_item(self, text_item):
+        self.ids.drop_item.text = text_item
+        self.menu.dismiss()
+
     def verifica_usuario(self):
-        if self.dicio[self.ids.spinner_id.text].strip() == getpass.getuser():
+        if self.dicio[self.ids.drop_item.text].strip() == getpass.getuser():
             self.manager.current = 'validar'
         else:
             self.dialog = MDDialog(text="Usuário inválido!", radius=[20, 7, 20, 7], )
@@ -56,10 +68,6 @@ class DataWindow(Screen):
         self.lista = []
         self.validos = []
 
-        with open('pasta.txt', encoding='utf-8') as user:
-            self.caminho = user.readlines()
-            self.caminho = [caminho.rstrip() for caminho in self.caminho]
-
         for i in range(12):
             mes = datetime.today()
             data_limite = mes - relativedelta(months=i)
@@ -70,11 +78,14 @@ class DataWindow(Screen):
         # Arquivo que serve como base para identificar a pasta de trabalho a ser utilizada, o ano é alterado de acordo
         # com a competencia selecionada pelo usuário
         with open('pasta.txt', 'r', encoding='utf-8') as path:
-            ano_competencia = path.read()
-        ano_competencia = ano_competencia.replace('20xx', self.text)
+            self.caminho = path.readlines()
+            self.caminho = [''.join((self.caminho[i][:45], self.text[3:9], self.caminho[i][49:])).rstrip() for i, row in
+                            enumerate(self.caminho)]
 
         with open('pasta.txt', 'w', encoding='utf-8') as path:
-            path.write(ano_competencia)
+            for ano in self.caminho:
+                path.write(f'{ano}\n')
+
         return self.text, self.caminho
 
     def status(self):  # Verifica se a situação das conciliações, se está validada ou pendente
@@ -105,7 +116,7 @@ class DataWindow(Screen):
                     if self.meu_status2 == '':
                         self.meu_status2, self.icone2, self.cor2 = 'Validação Pendente', 'alert-circle', [1, 0, 0, 1]
 
-        usuario = self.manager.get_screen('login').ids.spinner_id.text
+        usuario = self.manager.get_screen('login').ids.drop_item.text
         if usuario == self.manager.get_screen('login').lista_usuarios[0] and len(self.validos) >= 3:
             self.status_btn = True
         else:
@@ -116,7 +127,7 @@ class DataWindow(Screen):
         # Criar pdf com assinatura
         c = canvas.Canvas('watermark.pdf')
         # posicionar a imagem da assinatura nas coordenadas x e y
-        c.drawImage(self.manager.get_screen('login').ids.spinner_id.text + '.png', 350, 40, 150, 90,
+        c.drawImage(self.manager.get_screen('login').ids.drop_item.text + '.png', 350, 40, 150, 90,
                     mask='auto')
         c.save()
         watermark = PdfFileReader(open("watermark.pdf", "rb"))
@@ -218,7 +229,7 @@ class BoxTeste(Screen):
                     self.data['Balancete'].loc[index1] = dados.loc[index, ' Saldo Acumulado']
 
         self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
-            pd.to_numeric, errors='coerce')
+            pd.to_numeric)
         self.data.fillna(0, inplace=True)
         self.data = self.data.round(2)
         self.data['Conciliação'] = self.data['Debito'] - self.data['Credito']
@@ -229,8 +240,8 @@ class BoxTeste(Screen):
                                        (np.where(
                                            self.data['Data'] != self.manager.get_screen('validar').ids.spinner_id2.text,
                                            'Data Incorreta', 'OK')))
-        if self.manager.get_screen('login').ids.spinner_id.text != self.lista_usuarios[3]:
-            self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('login').ids.spinner_id.text]
+        if self.manager.get_screen('login').ids.drop_item.text != self.lista_usuarios[3]:
+            self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('login').ids.drop_item.text]
         self.data = self.data.round(2)
         self.resultado = self.data.to_records(index=False)
         self.resultado = list(self.resultado)
@@ -272,7 +283,7 @@ class BoxTeste(Screen):
             # Criar pdf com assinatura
             c = canvas.Canvas('watermark.pdf')
             # posicionar a imagem da assinatura nas coordenadas x e y
-            c.drawImage(self.manager.get_screen('login').ids.spinner_id.text + '.png', 40, 50, 150, 100,
+            c.drawImage(self.manager.get_screen('login').ids.drop_item.text + '.png', 40, 50, 150, 100,
                         mask='auto')
             c.save()
 
@@ -317,7 +328,7 @@ class BoxTeste(Screen):
             #  Após assinatura, criar um log simples em um arquivo de texto que permitirá ao sistema verificar o
             #  usuario que validou a sua respectiva conciliação e o período
             adicionar = [self.manager.get_screen('validar').ids.spinner_id2.text,
-                         self.manager.get_screen('login').ids.spinner_id.text, 'OK']
+                         self.manager.get_screen('login').ids.drop_item.text, 'OK']
             adicionar = ';'.join(adicionar)
             # salvar observação no arquivo
             with open(os.path.join(*self.manager.get_screen('validar').caminho[0].split('\\')[:3], 'dados.txt'),
