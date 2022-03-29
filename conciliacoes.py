@@ -26,6 +26,7 @@ from os.path import basename
 class LoginWindow(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.dialog = None
         self.dicio = {}
         self.lista_usuarios = []
         with open('usuarios.txt') as user:
@@ -36,7 +37,7 @@ class LoginWindow(Screen):
 
     def abre_menu(self):
         menu_items = [{"viewclass": "OneLineListItem", "text": i, "height": dp(56), "on_release":
-        lambda x=i: self.set_item(x), } for i in self.lista_usuarios]
+            lambda x=i: self.set_item(x), } for i in self.lista_usuarios]
 
         self.menu = MDDropdownMenu(caller=self.ids.drop_item, items=menu_items, position="center", width_mult=4, )
         self.menu.open()
@@ -65,6 +66,7 @@ class DataWindow(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.dialog = None
         self.lista = []
         self.validos = []
 
@@ -251,7 +253,7 @@ class BoxTeste(Screen):
 
     def add_tabela(self):
         self.tabela_dados = MDDataTable(pos_hint={'center_x': 0.5, 'y': 0.2},
-                                        size_hint=(0.8, 0.7),
+                                        size_hint=(0.7, 0.7),
                                         use_pagination=True, rows_num=10,
                                         background_color_header=get_color_from_hex("#03a9e0"),
                                         check=True,
