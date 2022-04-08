@@ -29,8 +29,8 @@ class LoginWindow(Screen):
         self.dialog = None
         self.dicio = {}
         self.lista_usuarios = []
-        with open('usuarios.txt') as user:
-            self.usuarios = user.readlines()
+        with open('usuarios.txt') as users:
+            self.usuarios = users.readlines()
             for user in self.usuarios:
                 self.lista_usuarios.append(user.split(';')[0])
                 self.dicio.update({user.split(';')[0]: user.split(';')[1]})
@@ -171,7 +171,7 @@ class BoxTeste(Screen):
         with open('usuarios.txt') as user:
             usuarios = user.readlines()
             for u in usuarios:
-                self.lista_usuarios.append(u.strip())
+                self.lista_usuarios.append(u.split(';')[0].strip())
 
     def validacao(self):
         self.caminho_mes = os.path.join(self.manager.get_screen('validar').caminho[0],
@@ -242,12 +242,12 @@ class BoxTeste(Screen):
                                        (np.where(
                                            self.data['Data'] != self.manager.get_screen('validar').ids.spinner_id2.text,
                                            'Data Incorreta', 'OK')))
-        if self.manager.get_screen('login').ids.drop_item.text != self.lista_usuarios[3]:
+        if self.manager.get_screen('login').ids.drop_item.text != self.lista_usuarios[0]:
             self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('login').ids.drop_item.text]
         self.data = self.data.round(2)
         self.resultado = self.data.to_records(index=False)
         self.resultado = list(self.resultado)
-        if len(self.resultado) == 1:
+        if len(self.resultado) == 1 or isinstance(len(self.resultado) / 10, float):
             self.resultado.append(('', '', '', '', '', '', ''))
         self.add_tabela()
 
