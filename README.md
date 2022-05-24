@@ -8,3 +8,4 @@ O Script deve percorrer a pasta onde se encontram os arquivos de conciliação, 
 diferença será apontada no relatório a ser gerado pelo programa. O usuário após realizar as correções poderá validar os arquivos, gerando cópias em pdf e inserindo
 sua assinatura, posteriormente o gestor poderá verificar o status e também assinar os arquivos.
 
+![alt text](https://github.com/LeandroPOliveira/Conciliacoes-Kivy/blob/main/tela_inicio.png?raw=true)
