@@ -1,31 +1,32 @@
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from kivy.properties import StringProperty, ListProperty, BooleanProperty
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
-from reportlab.pdfgen import canvas
-from PyPDF2 import PdfFileWriter, PdfFileReader
-from win32com import client
+from kivy.utils import get_color_from_hex
+import getpass
 from kivymd.app import MDApp
 from kivymd.uix.datatables import MDDataTable
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.metrics import dp
-import os
-import pandas as pd
-import openpyxl
 import numpy as np
-from datetime import datetime
-from kivy.utils import get_color_from_hex
-from dateutil.relativedelta import relativedelta
-import getpass
-from zipfile import ZipFile
+import os
 from os.path import basename
+import pandas as pd
+from PyPDF2 import PdfFileWriter, PdfFileReader
+import openpyxl
+from reportlab.pdfgen import canvas
+from win32com import client
+from zipfile import ZipFile
 
 
-class LoginWindow(Screen):
+class TelaLogin(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.menu = None
         self.dialog = None
         self.dicio = {}
         self.lista_usuarios = []
@@ -37,7 +38,7 @@ class LoginWindow(Screen):
 
     def abre_menu(self):
         menu_items = [{"viewclass": "OneLineListItem", "text": i, "height": dp(56), "on_release":
-            lambda x=i: self.set_item(x), } for i in self.lista_usuarios]
+                      lambda x=i: self.set_item(x), } for i in self.lista_usuarios]
 
         self.menu = MDDropdownMenu(caller=self.ids.drop_item, items=menu_items, position="center", width_mult=4, )
         self.menu.open()
@@ -54,7 +55,7 @@ class LoginWindow(Screen):
             self.dialog.open()
 
 
-class DataWindow(Screen):
+class TelaValidacao(Screen):
     meu_status = StringProperty('Não Verificado')
     meu_status1 = StringProperty('Não Verificado')
     meu_status2 = StringProperty('Não Verificado')
@@ -91,11 +92,10 @@ class DataWindow(Screen):
         return self.text, self.caminho
 
     def status(self):  # Verifica se a situação das conciliações, se está validada ou pendente
+        self.validos.clear()
         with open(os.path.join(*self.caminho[0].split('\\')[:3], 'dados.txt'), 'r') as f:
             lines = f.readlines()[1:]
-            self.meu_status = ''
-            self.meu_status1 = ''
-            self.meu_status2 = ''
+            self.meu_status, self.meu_status1, self.meu_status2 = '', '', ''
             for i in lines:  # verifica a situação da competência selecionada, usuarios que validaram ou não
                 i = i.split(';')
                 if i[0] == self.text and i[1] == self.manager.get_screen('login').lista_usuarios[1] \
@@ -163,9 +163,15 @@ class DataWindow(Screen):
         self.dialog.open()
 
 
-class BoxTeste(Screen):
+class TelaRelatorio(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.dialog_erro = None
+        self.dialog_ok = None
+        self.resultado = None
+        self.data = None
+        self.pasta_balancetes = None
+        self.caminho_mes = None
         self.tabela_dados = None
         self.lista_usuarios = []
         with open('usuarios.txt') as user:
@@ -191,13 +197,13 @@ class BoxTeste(Screen):
                 ws = wb[sheets[0]]
                 try:
                     conta = ws['A2'].value.split()
-                except:
+                except AttributeError:
                     conta = ['', '']
                 valor_deb = ws['C5'].value
                 valor_cred = ws['D5'].value
                 try:
                     data1 = ws['A5'].value.strftime('%m.%Y')
-                except:
+                except AttributeError:
                     data1 = ws['A5'].value
                 lista[0].append(conta[1])
                 lista[1].append(data1)
@@ -221,9 +227,9 @@ class BoxTeste(Screen):
                 lista4.update({i: tempo2})
 
         dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
-        dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), skiprows=12)
+        dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), skiprows=12, sheet_name=0)
         dados = pd.DataFrame(dados)
-        apoio = pd.read_excel('contas.xlsx')
+        apoio = pd.read_excel('contas.xlsx', sheet_name=0)
         apoio = pd.DataFrame(apoio)
         for index1, row1 in self.data.iterrows():
             for index, row in dados.iterrows():
@@ -302,11 +308,11 @@ class BoxTeste(Screen):
                 output = PdfFileWriter()
 
                 with open(path, "rb") as provisorio:
-                    input = PdfFileReader(provisorio)
-                    number_of_pages = input.getNumPages()
+                    arquivo = PdfFileReader(provisorio)
+                    number_of_pages = arquivo.getNumPages()
 
                     for current_page_number in range(number_of_pages):
-                        page = input.getPage(current_page_number)
+                        page = arquivo.getPage(current_page_number)
                         if page.extractText() != "":
                             output.addPage(page)
 
@@ -337,29 +343,29 @@ class BoxTeste(Screen):
                       'a') as f:
                 f.write(f'\n{adicionar}')
 
-            self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
-            self.dialog.open()
+            self.dialog_ok = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
+            self.dialog_ok.open()
 
         else:
-            self.dialog = MDDialog(text="Erro! Verificar pendências!", radius=[20, 7, 20, 7], )
-            self.dialog.open()
+            self.dialog_erro = MDDialog(text="Erro! Verificar pendências!", radius=[20, 7, 20, 7], )
+            self.dialog_erro.open()
 
 
 class WindowManager(ScreenManager):
     pass
 
 
-class Example(MDApp):
+class Conciliacoes(MDApp):
     popupWindow = None
 
     def meu_popup(self):
-        Example.popupWindow = Popup(title='Conciliações',
-                                    content=Label(text='Gerando relatório...', font_size=20),
-                                    size_hint=(None, None), size=(400, 300), auto_dismiss=False)
-        Example.popupWindow.open()
+        Conciliacoes.popupWindow = Popup(title='Conciliações',
+                                         content=Label(text='Gerando relatório...', font_size=20),
+                                         size_hint=(None, None), size=(400, 300), auto_dismiss=False)
+        Conciliacoes.popupWindow.open()
 
     def build(self):
         return Builder.load_file('conciliacoes.kv')
 
 
-Example().run()
+Conciliacoes().run()

@@ -22,7 +22,7 @@
     background_down: ''
     font_size: 16
 
-<LoginWindow>:
+<TelaLogin>:
     name: "login"
 
     FloatLayout:
@@ -67,7 +67,7 @@
                 root.verifica_usuario()
 
 
-<DataWindow>
+<TelaValidacao>
     name: 'validar'
 
     FloatLayout:
@@ -215,7 +215,7 @@
                 root.assina_gestor()
 
 
-<BoxTeste>:
+<TelaRelatorio>:
 
     on_enter:
 
@@ -252,10 +252,10 @@
 
 
 WindowManager:
-    LoginWindow:
+    TelaLogin:
 
-    DataWindow:
+    TelaValidacao:
         id: data_scr
 
-    BoxTeste:
+    TelaRelatorio:
         id: data2
