@@ -1,8 +1,11 @@
+import sqlite3
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from kivy.properties import StringProperty, ListProperty, BooleanProperty
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.utils import get_color_from_hex
@@ -349,6 +352,63 @@ class TelaRelatorio(Screen):
         else:
             self.dialog_erro = MDDialog(text="Erro! Verificar pendências!", radius=[20, 7, 20, 7], )
             self.dialog_erro.open()
+
+
+class Content(BoxLayout):
+    pass
+
+
+class TelaCadastro(Screen):
+
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tabela_cadastro = None
+        self.lista_cadastro = []
+        self.cad_dialog = None
+
+    def cadastro_contas(self):
+        conn = sqlite3.connect('contas')
+        cursor = conn.cursor()
+        cursor.execute('select * from cadastro')
+        dados = cursor.fetchall()
+        for i in dados:
+            self.lista_cadastro.append(i)
+        conn.close()
+        self.tabela_cadastro = MDDataTable(pos_hint={'x': 0.2, 'y': 0.2},
+                                        size_hint=(0.3, 0.7),
+                                        use_pagination=True, rows_num=10,
+                                        background_color_header=get_color_from_hex("#03a9e0"),
+                                        check=True,
+                                        column_data=[("[color=#ffffff]Conta[/color]", dp(50)),
+                                                     ("[color=#ffffff]Usuario[/color]", dp(50)),
+                                                     ],
+                                        row_data=self.lista_cadastro, elevation=1)
+
+        self.add_widget(self.tabela_cadastro)
+        self.tabela_cadastro.bind(on_check_press=self.checked)
+
+    def checked(self, instance_table, current_row):
+        conn = sqlite3.connect('contas')
+        cursor = conn.cursor()
+        cursor.execute('select * from cadastro where Conta = ?', (current_row[0], ))
+        linha = cursor.fetchone()
+        self.ids.conta.text = linha[0]
+        self.ids.usuario.text = linha[1]
+
+    def adicionar_conta(self):
+        conn = sqlite3.connect('contas')
+        cursor = conn.cursor()
+        cursor.execute('insert into cadastro (Conta, Usuario) values (?, ?)',
+                       (self.ids.conta.text, self.ids.usuario.text))
+        conn.commit()
+
+    def atualizar_conta(self):
+        conn = sqlite3.connect('contas')
+        cursor = conn.cursor()
+        cursor.execute('update cadastro set Usuario = ? where Conta = ?',
+                       (self.ids.usuario.text, self.ids.conta.text))
+        conn.commit()
 
 
 class WindowManager(ScreenManager):
