@@ -1,4 +1,5 @@
 #:import Factory kivy.factory.Factory
+#:import get_color_from_hex kivy.utils.get_color_from_hex
 
 <Image>
     source: 'drew.jpg'
@@ -215,15 +216,12 @@
             on_press:
                 root.assina_gestor()
 
-        MDRectangleFlatButton:
-            id: cadastro
-            size_hint: (.12, .08)
-            text: 'Cadastro Contas'
-            font_size: 24
-            pos_hint: {'x':0.825, 'y':0.45}
-            text_color: 1, 1, 1, 1
-            #line_color: 0, 0, 1, 1
-            md_bg_color: (36/255,100/255,203/255,1)
+        MDIconButton:
+            icon: "cog-outline"
+            pos_hint: {'x':0.92, 'y':0.9}
+            icon_size: '48sp'
+            theme_text_color: "Custom"
+            text_color: (36/255,100/255,203/255,1)
             on_press:
                 app.root.current = 'cadastro'
 
@@ -268,6 +266,16 @@
     on_enter:
         root.cadastro_contas()
 
+    MDIconButton:
+        icon: 'arrow-left-bold-outline'
+        icon_size: '50dp'
+        pos_hint: {'x':0.01, 'y':0.9}
+        theme_text_color: "Custom"
+        text_color: (36/255,100/255,203/255,1)
+        on_press:
+            app.root.current = 'validar'
+            root.manager.transition.direction = 'right'
+
     MDRectangleFlatButton:
         size_hint: (.275, .3)
         font_size: 20
@@ -296,24 +304,34 @@
         write_tab: False
 
     MDRectangleFlatButton:
-        size_hint: (.1, .05)
-        text: 'Cadastrar Novo'
+        size_hint: (.07, .05)
+        text: 'Cadastrar'
         font_size: 20
         pos_hint: {'x':0.62, 'y':0.45}
         text_color: 1, 1, 1, 1
         md_bg_color: (36/255,100/255,203/255,1)
         on_press:
+            root.adicionar_conta()
 
     MDRectangleFlatButton:
-        size_hint: (.1, .05)
+        size_hint: (.07, .05)
         text: 'Atualizar'
         font_size: 20
-        pos_hint: {'x':0.75, 'y':0.45}
+        pos_hint: {'x':0.7, 'y':0.45}
         text_color: 1, 1, 1, 1
         md_bg_color: (36/255,100/255,203/255,1)
         on_press:
+            root.atualizar_conta()
 
-
+    MDRectangleFlatButton:
+        size_hint: (.07, .05)
+        text: 'Apagar'
+        font_size: 20
+        pos_hint: {'x':0.78, 'y':0.45}
+        text_color: 1, 1, 1, 1
+        md_bg_color: (36/255,100/255,203/255,1)
+        on_press:
+            root.apagar_conta()
 
 WindowManager:
     TelaLogin:

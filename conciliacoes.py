@@ -5,7 +5,7 @@ from kivy.properties import StringProperty, ListProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivymd.uix.button import MDFlatButton
+
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.utils import get_color_from_hex
@@ -232,8 +232,12 @@ class TelaRelatorio(Screen):
         dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
         dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), skiprows=12, sheet_name=0)
         dados = pd.DataFrame(dados)
-        apoio = pd.read_excel('contas.xlsx', sheet_name=0)
+        conn = sqlite3.connect('contas')
+        cursor = conn.cursor()
+        cursor.execute('select * from cadastro order by Conta')
+        apoio = cursor.fetchall()
         apoio = pd.DataFrame(apoio)
+        apoio.columns = ['Conta', 'Usuario']
         for index1, row1 in self.data.iterrows():
             for index, row in dados.iterrows():
                 if row1['Conta'] == row['Conta CSPE']:
@@ -360,30 +364,33 @@ class Content(BoxLayout):
 
 class TelaCadastro(Screen):
 
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.dialog_atu = None
+        self.dialog_add = None
+        self.dialog_apg = None
         self.tabela_cadastro = None
         self.lista_cadastro = []
         self.cad_dialog = None
 
     def cadastro_contas(self):
+        self.lista_cadastro.clear()
         conn = sqlite3.connect('contas')
         cursor = conn.cursor()
-        cursor.execute('select * from cadastro')
+        cursor.execute('select * from cadastro order by Conta')
         dados = cursor.fetchall()
         for i in dados:
             self.lista_cadastro.append(i)
         conn.close()
         self.tabela_cadastro = MDDataTable(pos_hint={'x': 0.2, 'y': 0.2},
-                                        size_hint=(0.3, 0.7),
-                                        use_pagination=True, rows_num=10,
-                                        background_color_header=get_color_from_hex("#03a9e0"),
-                                        check=True,
-                                        column_data=[("[color=#ffffff]Conta[/color]", dp(50)),
-                                                     ("[color=#ffffff]Usuario[/color]", dp(50)),
-                                                     ],
-                                        row_data=self.lista_cadastro, elevation=1)
+                                           size_hint=(0.3, 0.7),
+                                           use_pagination=True, rows_num=30,
+                                           background_color_header=get_color_from_hex("#03a9e0"),
+                                           check=True,
+                                           column_data=[("[color=#ffffff]Conta[/color]", dp(50)),
+                                                        ("[color=#ffffff]Usuario[/color]", dp(50)),
+                                                        ],
+                                           row_data=self.lista_cadastro, elevation=1)
 
         self.add_widget(self.tabela_cadastro)
         self.tabela_cadastro.bind(on_check_press=self.checked)
@@ -402,6 +409,9 @@ class TelaCadastro(Screen):
         cursor.execute('insert into cadastro (Conta, Usuario) values (?, ?)',
                        (self.ids.conta.text, self.ids.usuario.text))
         conn.commit()
+        self.cadastro_contas()
+        self.dialog_add = MDDialog(text="Conta Adicionada com sucesso!", radius=[20, 7, 20, 7], )
+        self.dialog_add.open()
 
     def atualizar_conta(self):
         conn = sqlite3.connect('contas')
@@ -409,6 +419,19 @@ class TelaCadastro(Screen):
         cursor.execute('update cadastro set Usuario = ? where Conta = ?',
                        (self.ids.usuario.text, self.ids.conta.text))
         conn.commit()
+        self.cadastro_contas()
+        self.dialog_atu = MDDialog(text="Conta atualizada com sucesso!", radius=[20, 7, 20, 7], )
+        self.dialog_atu.open()
+
+    def apagar_conta(self):
+        conn = sqlite3.connect('contas')
+        cursor = conn.cursor()
+        cursor.execute('delete from cadastro where Conta = ?',
+                       (self.ids.conta.text, ))
+        conn.commit()
+        self.cadastro_contas()
+        self.dialog_apg = MDDialog(text="Conta apagada com sucesso!", radius=[20, 7, 20, 7], )
+        self.dialog_apg.open()
 
 
 class WindowManager(ScreenManager):
@@ -425,7 +448,8 @@ class Conciliacoes(MDApp):
         Conciliacoes.popupWindow.open()
 
     def build(self):
-        return Builder.load_file('conciliacoes.kv')
+        pass
+        #return Builder.load_file('conciliacoes.kv')
 
 
 Conciliacoes().run()
