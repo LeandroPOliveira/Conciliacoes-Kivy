@@ -1,6 +1,8 @@
 import sqlite3
+import threading
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from kivy.clock import Clock
 from kivy.properties import StringProperty, ListProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
@@ -127,6 +129,23 @@ class TelaValidacao(Screen):
         else:
             self.status_btn = False
 
+    def start_foo_thread(self):
+        self.foo_thread = threading.Thread(target=self.assina_gestor)
+        self.foo_thread.daemon = True
+        self.pb = MDDialog(text="Aguarde...", radius=[20, 7, 20, 7], )
+        self.pb.open()
+        self.foo_thread.start()
+        Clock.schedule_interval(self.check_foo_thread, 10)
+
+    def check_foo_thread(self, dt):
+        if self.foo_thread.is_alive():
+            Clock.schedule_interval(self.check_foo_thread, 10)
+        else:
+            self.pb.dismiss()
+            self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
+            self.dialog.open()
+            Clock.unschedule(self.check_foo_thread)
+
     def assina_gestor(self):
         self.caminho_mes = os.path.join(self.caminho[0], self.ids.spinner_id2.text)
         # Criar pdf com assinatura
@@ -162,8 +181,8 @@ class TelaValidacao(Screen):
                 os.remove(self.caminho_mes + '\\' + file)
                 os.remove(self.caminho_mes + '\\' + file[8:])
 
-        self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
-        self.dialog.open()
+        # self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
+        # self.dialog.open()
 
 
 class TelaRelatorio(Screen):
@@ -193,7 +212,7 @@ class TelaRelatorio(Screen):
                 pasta1.remove(i)
 
         for i in pasta1:
-            if i.endswith('.xlsx'):
+            if i.startswith('Conta') or i.startswith('conta'):
                 wb = openpyxl.load_workbook(os.path.join(self.caminho_mes, i),
                                             read_only=True)
                 sheets = wb.sheetnames
@@ -270,7 +289,7 @@ class TelaRelatorio(Screen):
                                         use_pagination=True, rows_num=10,
                                         background_color_header=get_color_from_hex("#03a9e0"),
                                         check=True,
-                                        column_data=[("[color=#ffffff]Conta[/color]", dp(30)),
+                                        column_data=[("[color=#ffffff]Conta[/color]", dp(40)),
                                                      ("[color=#ffffff]Data[/color]", dp(20)),
                                                      ("[color=#ffffff]Balancete[/color]", dp(30)),
                                                      ("[color=#ffffff]Conciliação[/color]", dp(30)),
