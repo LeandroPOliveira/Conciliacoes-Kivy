@@ -243,7 +243,7 @@ class TelaRelatorio(Screen):
         lista4 = {}
         for i in lista:
             if self.manager.get_screen('validar').ids.spinner_id2.text in i or \
-                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in i:
+                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in i and 'plano050' not in i:
                 tempo = os.path.getmtime(os.path.join(self.pasta_balancetes, i))
                 tempo2 = datetime.fromtimestamp(tempo)
                 lista4.update({i: tempo2})
