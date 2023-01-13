@@ -7,7 +7,6 @@ from kivy.properties import StringProperty, ListProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.utils import get_color_from_hex
@@ -249,7 +248,7 @@ class TelaRelatorio(Screen):
                 lista4.update({i: tempo2})
 
         dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
-        dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), skiprows=12, sheet_name=0)
+        dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), sheet_name=0)
         dados = pd.DataFrame(dados)
         conn = sqlite3.connect('contas')
         cursor = conn.cursor()
@@ -260,8 +259,7 @@ class TelaRelatorio(Screen):
         for index1, row1 in self.data.iterrows():
             for index, row in dados.iterrows():
                 if row1['Conta'] == row['Conta CSPE']:
-                    self.data['Balancete'].loc[index1] = dados.loc[index, ' Saldo Acumulado']
-
+                    self.data['Balancete'].loc[index1] = dados.loc[index, 'Saldo Acumulado']
         self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
             pd.to_numeric)
         self.data.fillna(0, inplace=True)
@@ -322,10 +320,10 @@ class TelaRelatorio(Screen):
             c.save()
 
             for i in lista3:  # converter arquivos excel para pdf
-
+                print(self.caminho_mes)
                 excel = client.Dispatch("Excel.Application")
                 sheets = excel.Workbooks.Open(self.caminho_mes + '\\' + i)
-                work_sheets = sheets.Worksheets[0]
+                work_sheets = sheets.Worksheets[1]
                 path = os.path.join(self.caminho_mes, 'teste ' + i.replace('.xlsx', '.pdf'))
                 work_sheets.ExportAsFixedFormat(0, path)
 
@@ -472,3 +470,4 @@ class Conciliacoes(MDApp):
 
 
 Conciliacoes().run()
+
