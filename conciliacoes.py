@@ -88,7 +88,6 @@ class TelaValidacao(Screen):
             self.caminho = path.readlines()
             self.caminho = [''.join((self.caminho[i][:45], self.text[3:9], self.caminho[i][49:])).rstrip() for i, row in
                             enumerate(self.caminho)]
-
         with open('pasta.txt', 'w', encoding='utf-8') as path:
             for ano in self.caminho:
                 path.write(f'{ano}\n')
@@ -242,7 +241,7 @@ class TelaRelatorio(Screen):
         lista4 = {}
         for i in lista:
             if self.manager.get_screen('validar').ids.spinner_id2.text in i or \
-                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in i and 'plano050' not in i:
+                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in i:
                 tempo = os.path.getmtime(os.path.join(self.pasta_balancetes, i))
                 tempo2 = datetime.fromtimestamp(tempo)
                 lista4.update({i: tempo2})
@@ -261,7 +260,7 @@ class TelaRelatorio(Screen):
                 if row1['Conta'] == row['Conta CSPE']:
                     self.data['Balancete'].loc[index1] = dados.loc[index, 'Saldo Acumulado']
         self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
-            pd.to_numeric)
+            pd.to_numeric, errors='coerce')
         self.data.fillna(0, inplace=True)
         self.data = self.data.round(2)
         self.data['Conciliação'] = self.data['Debito'] - self.data['Credito']
@@ -320,7 +319,6 @@ class TelaRelatorio(Screen):
             c.save()
 
             for i in lista3:  # converter arquivos excel para pdf
-                print(self.caminho_mes)
                 excel = client.Dispatch("Excel.Application")
                 sheets = excel.Workbooks.Open(self.caminho_mes + '\\' + i)
                 work_sheets = sheets.Worksheets[1]
