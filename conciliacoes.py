@@ -179,9 +179,6 @@ class TelaValidacao(Screen):
                 os.remove(self.caminho_mes + '\\' + file)
                 os.remove(self.caminho_mes + '\\' + file[8:])
 
-        # self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
-        # self.dialog.open()
-
 
 class TelaRelatorio(Screen):
     def __init__(self, **kwargs):
@@ -247,6 +244,7 @@ class TelaRelatorio(Screen):
                 lista4.update({i: tempo2})
 
         dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
+        print(dados)
         dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), sheet_name=0)
         dados = pd.DataFrame(dados)
         conn = sqlite3.connect('contas')
@@ -302,6 +300,24 @@ class TelaRelatorio(Screen):
     def checked(self, instance_table, current_row):
         os.startfile(os.path.join(self.caminho_mes, 'Conta ' +
                                   current_row[0].replace('.', '') + '.xlsx'))
+
+    def start_foo_thread2(self):
+        self.foo_thread = threading.Thread(target=self.assina)
+        self.foo_thread.daemon = True
+        self.pb = MDDialog(text="Aguarde...", radius=[20, 7, 20, 7], )
+        self.pb.open()
+        self.foo_thread.start()
+        Clock.schedule_interval(self.check_foo_thread2, 10)
+
+    def check_foo_thread2(self, dt):
+        if self.foo_thread.is_alive():
+            Clock.schedule_interval(self.check_foo_thread2, 10)
+        else:
+            self.pb.dismiss()
+            self.dialog = MDDialog(text="Assinado com sucesso!", radius=[20, 7, 20, 7], )
+            self.dialog.open()
+            Clock.unschedule(self.check_foo_thread2)
+
 
     def assina(self):
         valida = self.data['Status'].unique()
@@ -464,7 +480,7 @@ class Conciliacoes(MDApp):
 
     def build(self):
         pass
-        #return Builder.load_file('conciliacoes.kv')
+        # return Builder.load_file('conciliacoes.kv')
 
 
 Conciliacoes().run()
