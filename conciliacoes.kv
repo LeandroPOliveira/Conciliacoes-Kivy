@@ -17,12 +17,12 @@
             pos: self.pos
             radius: [5]
 
-
 <MySpinnerOption@SpinnerOption>:
     background_color: (166/255, 234/255, 255/255, 1)
     color: (0,0,0,1)
     background_down: ''
     font_size: 16
+
 
 <TelaLogin>:
     name: "login"
@@ -102,8 +102,8 @@
         Spinner:
             id: spinner_id2
             font_size: 18
-            text: root.lista[0]
-            values: root.lista
+            text: root.intervalo_meses[0]
+            values: root.intervalo_meses
             size_hint: (.2, .05)
             pos_hint: {'x':0.4, 'y':0.65}
             background_normal: ''
@@ -226,6 +226,7 @@
             on_press:
                 app.root.current = 'cadastro'
 
+
 <TelaRelatorio>:
 
     on_enter:
@@ -260,6 +261,7 @@
             md_bg_color: (36/255,100/255,203/255,1)
             on_press:
                 root.start_foo_thread2()
+
 
 <TelaCadastro>:
     name: 'cadastro'
@@ -333,6 +335,7 @@
         md_bg_color: (36/255,100/255,203/255,1)
         on_press:
             root.apagar_conta()
+
 
 WindowManager:
     TelaLogin:
