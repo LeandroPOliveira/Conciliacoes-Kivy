@@ -76,7 +76,7 @@ class TelaValidacao(Screen):
         self.intervalo_meses = []
         self.validos = []
 
-        for i in range(12):
+        for i in range(24):
             mes = datetime.today()
             data_limite = mes - relativedelta(months=i)
             self.intervalo_meses.append(data_limite.strftime('%m.%Y'))
@@ -206,17 +206,16 @@ class TelaRelatorio(Screen):
         self.caminho_mes = os.path.join(self.manager.get_screen('validar').caminho,
                                         self.manager.get_screen('validar').ids.spinner_id2.text)
 
-        pasta1 = os.listdir(self.caminho_mes)
-        lista = [[], [], [], [], []]
-        for i in pasta1[::-1]:
+        conciliacoes_do_mes = os.listdir(self.caminho_mes)
+        relatorio = [[], [], [], [], []]
+        for i in conciliacoes_do_mes[::-1]:
             if i.startswith('~'):
-                pasta1.remove(i)
+                conciliacoes_do_mes.remove(i)
 
-        for i in pasta1:
-            print(i)
-            if i.startswith('Conta') or i.startswith('conta'):
+        for conciliacao in conciliacoes_do_mes:
+            if conciliacao.startswith('Conta') or conciliacao.startswith('conta'):
 
-                wb = openpyxl.load_workbook(os.path.join(self.caminho_mes, i),
+                wb = openpyxl.load_workbook(os.path.join(self.caminho_mes, conciliacao),
                                             read_only=True)
                 sheets = wb.sheetnames
                 ws = wb[sheets[0]]
@@ -230,61 +229,56 @@ class TelaRelatorio(Screen):
                     data1 = ws['A5'].value.strftime('%m.%Y')
                 except AttributeError:
                     data1 = ws['A5'].value
-                lista[0].append(conta[1])
-                lista[1].append(data1)
-                lista[2].append(valor_deb)
-                lista[3].append(valor_cred)
+                relatorio[0].append(conta[1])
+                relatorio[1].append(data1)
+                relatorio[2].append(valor_deb)
+                relatorio[3].append(valor_cred)
                 wb.close()
 
-        self.data = pd.DataFrame(lista).T
+        self.data = pd.DataFrame(relatorio).T
         self.data.columns = ['Conta', 'Data', 'Debito', 'Credito', 'Balancete']
         # Listar planilhas dos balancetes
         self.pasta_balancetes = self.manager.get_screen('validar').caminho_balancete
 
-        lista = os.listdir(self.pasta_balancetes)
+        lista_balancetes = os.listdir(self.pasta_balancetes)
 
-        lista4 = {}
-        for i in lista:
-            if self.manager.get_screen('validar').ids.spinner_id2.text in i or \
-                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in i:
-                tempo = os.path.getmtime(os.path.join(self.pasta_balancetes, i))
-                tempo2 = datetime.fromtimestamp(tempo)
-                lista4.update({i: tempo2})
+        for balancete in lista_balancetes:
+            if self.manager.get_screen('validar').ids.spinner_id2.text in balancete or \
+                    self.manager.get_screen('validar').ids.spinner_id2.text.replace('.', '') in balancete:
+                balancete_atual = balancete
 
-        dados = list(lista4.keys())[list(lista4.values()).index(max(lista4.values()))]
-        print(dados)
-        dados = pd.read_excel(os.path.join(self.pasta_balancetes, dados), sheet_name=0)
-        dados = pd.DataFrame(dados)
-        conn = sqlite3.connect('contas')
-        cursor = conn.cursor()
-        cursor.execute('select * from cadastro order by Conta')
-        apoio = cursor.fetchall()
-        apoio = pd.DataFrame(apoio)
-        apoio.columns = ['Conta', 'Usuario']
-        for index1, row1 in self.data.iterrows():
-            for index, row in dados.iterrows():
-                if row1['Conta'] == row['Conta CSPE']:
-                    self.data['Balancete'].loc[index1] = dados.loc[index, 'Saldo Acumulado']
-        self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
-            pd.to_numeric, errors='coerce')
-        self.data.fillna(0, inplace=True)
-        self.data = self.data.round(2)
-        self.data['Conciliação'] = self.data['Debito'] - self.data['Credito']
-        self.data.drop(['Debito', 'Credito'], axis=1, inplace=True)
-        self.data['Diferença'] = self.data['Conciliação'] - self.data['Balancete']
-        self.data = pd.merge(self.data, apoio[['Conta', 'Usuario']], on=['Conta'], how='left')
-        self.data['Status'] = np.where(self.data['Diferença'] != 0, 'Diferença de Valor',
-                                       (np.where(
-                                           self.data['Data'] != self.manager.get_screen('validar').ids.spinner_id2.text,
-                                           'Data Incorreta', 'OK')))
-        if self.manager.get_screen('login').ids.drop_item.text != self.lista_usuarios[0]:
-            self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('login').ids.drop_item.text]
-        self.data = self.data.round(2)
-        self.resultado = self.data.to_records(index=False)
-        self.resultado = list(self.resultado)
-        if len(self.resultado) == 1 or isinstance(len(self.resultado) / 10, float):
-            self.resultado.append(('', '', '', '', '', '', ''))
-        self.add_tabela()
+                dados = pd.read_excel(os.path.join(self.pasta_balancetes, balancete_atual), sheet_name=0)
+                dados = pd.DataFrame(dados)
+                conn = sqlite3.connect('contas')
+                cursor = conn.cursor()
+                cursor.execute('select * from cadastro order by Conta')
+                tabela_contas = cursor.fetchall()
+                tabela_contas = pd.DataFrame(tabela_contas)
+                tabela_contas.columns = ['Conta', 'Usuario']
+                for index1, row1 in self.data.iterrows():
+                    for index, row in dados.iterrows():
+                        if row1['Conta'] == row['Conta CSPE']:
+                            self.data['Balancete'].loc[index1] = dados.loc[index, 'Saldo Acumulado']
+                self.data[['Debito', 'Credito', 'Balancete']] = self.data[['Debito', 'Credito', 'Balancete']].apply(
+                    pd.to_numeric, errors='coerce')
+                self.data.fillna(0, inplace=True)
+                self.data = self.data.round(2)
+                self.data['Conciliação'] = self.data['Debito'] - self.data['Credito']
+                self.data.drop(['Debito', 'Credito'], axis=1, inplace=True)
+                self.data['Diferença'] = self.data['Conciliação'] - self.data['Balancete']
+                self.data = pd.merge(self.data, tabela_contas[['Conta', 'Usuario']], on=['Conta'], how='left')
+                self.data['Status'] = np.where(self.data['Diferença'] != 0, 'Diferença de Valor',
+                                               (np.where(
+                                                   self.data['Data'] != self.manager.get_screen('validar').ids.spinner_id2.text,
+                                                   'Data Incorreta', 'OK')))
+                if self.manager.get_screen('login').ids.drop_item.text != self.lista_usuarios[0]:
+                    self.data = self.data.loc[self.data['Usuario'] == self.manager.get_screen('login').ids.drop_item.text]
+                self.data = self.data.round(2)
+                self.resultado = self.data.to_records(index=False)
+                self.resultado = list(self.resultado)
+                if len(self.resultado) == 1 or isinstance(len(self.resultado) / 10, float):
+                    self.resultado.append(('', '', '', '', '', '', ''))
+                self.add_tabela()
 
     def add_tabela(self):
         self.tabela_dados = MDDataTable(pos_hint={'center_x': 0.5, 'y': 0.2},
@@ -303,9 +297,9 @@ class TelaRelatorio(Screen):
                                         row_data=self.resultado, elevation=1)
 
         self.add_widget(self.tabela_dados)
-        self.tabela_dados.bind(on_check_press=self.checked)
+        self.tabela_dados.bind(on_check_press=self.item_marcado)
 
-    def checked(self, instance_table, current_row):
+    def item_marcado(self, instance_table, current_row):
         os.startfile(os.path.join(self.caminho_mes, 'Conta ' +
                                   current_row[0].replace('.', '') + '.xlsx'))
 
@@ -430,9 +424,9 @@ class TelaCadastro(Screen):
                                            row_data=self.lista_cadastro, elevation=1)
 
         self.add_widget(self.tabela_cadastro)
-        self.tabela_cadastro.bind(on_check_press=self.checked)
+        self.tabela_cadastro.bind(on_check_press=self.conta_marcada)
 
-    def checked(self, instance_table, current_row):
+    def conta_marcada(self, instance_table, current_row):
         conn = sqlite3.connect('contas')
         cursor = conn.cursor()
         cursor.execute('select * from cadastro where Conta = ?', (current_row[0], ))
@@ -480,9 +474,7 @@ class Conciliacoes(MDApp):
     popupWindow = None
 
     def meu_popup(self):
-        Conciliacoes.popupWindow = Popup(title='Conciliações',
-                                         content=Label(text='Gerando relatório...', font_size=20),
-                                         size_hint=(None, None), size=(400, 300), auto_dismiss=False)
+        Conciliacoes.popupWindow = MDDialog(text="Gerando relatório...", radius=[20, 7, 20, 7], )
         Conciliacoes.popupWindow.open()
 
     def build(self):
